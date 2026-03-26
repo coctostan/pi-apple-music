@@ -54,7 +54,8 @@ export async function createPlaylist(
   client: AppleMusicClient,
   name: string,
   description: string | undefined,
-  trackIds: string[]
+  trackIds: string[],
+  libraryTrackIds?: Set<string>
 ): Promise<string> {
   try {
     const body: CreatePlaylistRequest = {
@@ -85,15 +86,27 @@ export async function createPlaylist(
 
     const createdName = response.data[0]?.attributes.name ?? name;
 
-    return [
+    const sections = [
       `## Playlist Created ✓`,
       ``,
       `**Name:** ${createdName}`,
       `**Description:** ${description ?? "None"}`,
       `**Tracks added:** ${trackIds.length}`,
+    ];
+
+    if (libraryTrackIds && libraryTrackIds.size > 0) {
+      const dupes = trackIds.filter((id) => libraryTrackIds.has(id));
+      if (dupes.length > 0) {
+        sections.push(``, `**Note:** ${dupes.length} track(s) may already be in your library.`);
+      }
+    }
+
+    sections.push(
       ``,
-      `The playlist "${createdName}" has been created in your Apple Music library.`,
-    ].join("\n");
+      `The playlist "${createdName}" has been created in your Apple Music library.`
+    );
+
+    return sections.join("\n");
   } catch (error) {
     return `## Playlist Creation Failed\nError creating playlist: ${error instanceof Error ? error.message : String(error)}`;
   }

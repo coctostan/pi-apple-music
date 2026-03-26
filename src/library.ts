@@ -34,7 +34,7 @@ export async function fetchLibrarySongs(client: AppleMusicClient, limit: number)
       const attrs = song.attributes;
       const genres = attrs.genreNames.length > 0 ? ` [${attrs.genreNames.join(", ")}]` : "";
       const duration = formatDuration(attrs.durationInMillis);
-      return `${i + 1}. "${attrs.name}" by ${attrs.artistName} (${attrs.albumName}) ${duration}${genres}`;
+      return `${i + 1}. "${attrs.name}" by ${attrs.artistName} (${attrs.albumName}) ${duration}${genres} (ID: ${song.id})`;
     });
 
     const result = `## Library Songs (${response.data.length} of ${total})\n\n${lines.join("\n")}`;
@@ -242,5 +242,96 @@ export async function fetchLibrarySummary(client: AppleMusicClient): Promise<str
     return result;
   } catch (error) {
     return `## Library Summary\nError fetching library summary: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}
+
+export async function fetchGenreBreakdown(
+  client: AppleMusicClient,
+  limit: number
+): Promise<string> {
+  const cacheKey = `genres:${limit}`;
+  const cached = libraryCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const response = (await client.get(
+      `/v1/me/library/songs?limit=${limit}`
+    )) as AppleMusicResponse<LibrarySongAttributes>;
+
+    if (!response.data || response.data.length === 0) {
+      return "## Genre Breakdown\nNo songs found in library.";
+    }
+
+    const genreCounts = new Map<string, number>();
+    for (const song of response.data) {
+      for (const genre of song.attributes.genreNames) {
+        genreCounts.set(genre, (genreCounts.get(genre) ?? 0) + 1);
+      }
+    }
+
+    const sorted = [...genreCounts.entries()].sort((a, b) => b[1] - a[1]);
+    const totalSongs = response.data.length;
+
+    const rows = sorted.map(([genre, count]) => {
+      const pct = Math.round((count / totalSongs) * 100);
+      return `| ${genre} | ${count} | ${pct}% |`;
+    });
+
+    const result = [
+      `## Genre Breakdown (${totalSongs} songs analyzed)`,
+      ``,
+      `| Genre | Songs | % |`,
+      `|-------|-------|---|`,
+      ...rows,
+    ].join("\n");
+
+    libraryCache.set(cacheKey, result);
+    return result;
+  } catch (error) {
+    return `## Genre Breakdown\nError analyzing genres: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}
+
+export async function fetchTopArtists(client: AppleMusicClient, limit: number): Promise<string> {
+  const cacheKey = `top-artists:${limit}`;
+  const cached = libraryCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    // Fetch more songs for better analysis, use limit for output count
+    const fetchLimit = Math.max(limit * 10, 200);
+    const response = (await client.get(
+      `/v1/me/library/songs?limit=${fetchLimit}`
+    )) as AppleMusicResponse<LibrarySongAttributes>;
+
+    if (!response.data || response.data.length === 0) {
+      return "## Top Artists\nNo songs found in library.";
+    }
+
+    const artistCounts = new Map<string, number>();
+    for (const song of response.data) {
+      const artist = song.attributes.artistName;
+      artistCounts.set(artist, (artistCounts.get(artist) ?? 0) + 1);
+    }
+
+    const sorted = [...artistCounts.entries()].sort((a, b) => b[1] - a[1]);
+    const top = sorted.slice(0, limit);
+    const uniqueArtists = artistCounts.size;
+    const totalSongs = response.data.length;
+
+    const lines = top.map(
+      ([artist, count], i) => `${i + 1}. ${artist} (${count} song${count !== 1 ? "s" : ""})`
+    );
+
+    const result = [
+      `## Top Artists (${uniqueArtists} artists from ${totalSongs} songs)`,
+      ``,
+      ...lines,
+    ].join("\n");
+
+    libraryCache.set(cacheKey, result);
+    return result;
+  } catch (error) {
+    return `## Top Artists\nError analyzing artists: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
