@@ -5,19 +5,19 @@
 See: .paul/PROJECT.md (updated 2026-03-26)
 
 **Core value:** AI-powered playlist generation from your Apple Music library, directly within Pi.
-**Current focus:** Phase 4 — Library Caching
+**Current focus:** Phase 5 — Playlist Management
 
 ## Current Position
 
 Milestone: v0.2 Smart Playlists & Polish
-Phase: 4 of 7 (Library Caching) — Planning
-Plan: 04-01 created, awaiting approval
+Phase: 5 of 7 (Playlist Management) — Planning
+Plan: 05-01 created, awaiting approval
 Status: PLAN created, ready for APPLY
-Last activity: 2026-03-26 — Created .paul/phases/04-library-caching/04-01-PLAN.md
+Last activity: 2026-03-26 — Created .paul/phases/05-playlist-management/05-01-PLAN.md
 
 Progress:
-- v0.2: [░░░░░░░░░░] 0%
-- Phase 4: [░░░░░░░░░░] 0%
+- v0.2: [██░░░░░░░░] 25%
+- Phase 5: [░░░░░░░░░░] 0%
 
 ## Loop Position
 
@@ -27,15 +27,19 @@ PLAN ──▶ APPLY ──▶ UNIFY
   ✓        ○        ○     [Plan created, awaiting approval]
 ```
 
+## Git State
+Branch: main
+
 ## Accumulated Context
 
 ### Decisions
 None yet.
 
 ### Deferred Issues
-- Automated music user token auth flow — user provides manually
+- Automated music user token auth flow
 - CI/CD pipeline
 - npm publishing
+- src/index.ts at 312 lines — monitor
 
 ### Blockers/Concerns
 None.
@@ -43,9 +47,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Plan 04-01 created
+Stopped at: Plan 05-01 created
 Next action: Review and approve plan, then run /paul:apply
-Resume file: .paul/phases/04-library-caching/04-01-PLAN.md
+Resume file: .paul/phases/05-playlist-management/05-01-PLAN.md
 
 ---
 *STATE.md — Updated after every significant action*

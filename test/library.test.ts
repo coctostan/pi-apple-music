@@ -243,7 +243,7 @@ void describe("fetchLibraryPlaylists", () => {
     const result = await fetchLibraryPlaylists(client, 50);
 
     assert.ok(result.includes("## Library Playlists (2 of 8)"));
-    assert.ok(result.includes('"Road Trip Mix" — Songs for long drives'));
+    assert.ok(result.includes('"Road Trip Mix" (ID: p1) — Songs for long drives'));
     assert.ok(result.includes('"Workout Beats"'));
   });
 

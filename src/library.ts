@@ -124,7 +124,7 @@ export async function fetchLibraryPlaylists(
     const lines = response.data.map((playlist, i) => {
       const attrs = playlist.attributes;
       const desc = attrs.description?.standard ? ` — ${attrs.description.standard}` : "";
-      return `${i + 1}. "${attrs.name}"${desc}`;
+      return `${i + 1}. "${attrs.name}" (ID: ${playlist.id})${desc}`;
     });
 
     const result = `## Library Playlists (${response.data.length} of ${total})\n\n${lines.join("\n")}`;

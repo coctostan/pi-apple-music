@@ -98,3 +98,31 @@ export async function createPlaylist(
     return `## Playlist Creation Failed\nError creating playlist: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
+
+export async function addTracksToPlaylist(
+  client: AppleMusicClient,
+  playlistId: string,
+  trackIds: string[]
+): Promise<string> {
+  try {
+    const body = {
+      data: trackIds.map((id) => ({
+        id,
+        type: getTrackType(id),
+      })),
+    };
+
+    await client.post(`/v1/me/library/playlists/${playlistId}/tracks`, body);
+
+    return [
+      `## Tracks Added ✓`,
+      ``,
+      `**Playlist ID:** ${playlistId}`,
+      `**Tracks added:** ${trackIds.length}`,
+      ``,
+      `Successfully added ${trackIds.length} track${trackIds.length !== 1 ? "s" : ""} to the playlist.`,
+    ].join("\n");
+  } catch (error) {
+    return `## Add Tracks Failed\nError adding tracks: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}

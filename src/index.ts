@@ -22,7 +22,7 @@ import {
   fetchRecentlyPlayed,
   fetchLibrarySummary,
 } from "./library.js";
-import { searchCatalog, createPlaylist } from "./playlist.js";
+import { searchCatalog, createPlaylist, addTracksToPlaylist } from "./playlist.js";
 
 export default function piAppleMusic(pi: ExtensionAPI) {
   let config: AppleMusicConfig | null = null;
@@ -242,20 +242,32 @@ export default function piAppleMusic(pi: ExtensionAPI) {
     },
   });
 
-  // --- Playlist Creation Tool ---
+  // --- Playlist Tool ---
   pi.registerTool({
     name: TOOL_NAME_PLAYLIST,
-    label: "Create Apple Music Playlist",
+    label: "Apple Music Playlist",
     description:
-      "Create a new playlist in the user's Apple Music library with specified tracks. Use apple_music_search to find track IDs first.",
+      'Manage Apple Music playlists. Use action "create" to make a new playlist, or "add-tracks" to add songs to an existing playlist. Use apple_music_search to find track IDs and apple_music_library action "playlists" to find playlist IDs.',
     parameters: Type.Object({
-      name: Type.String({ description: "Name of the new playlist" }),
-      description: Type.Optional(Type.String({ description: "Description for the playlist" })),
+      action: StringEnum(["create", "add-tracks"] as const, {
+        description: 'Action to perform (default: "create")',
+      }),
+      name: Type.Optional(
+        Type.String({ description: "Name of the new playlist (required for create)" })
+      ),
+      description: Type.Optional(
+        Type.String({ description: "Description for the playlist (create only)" })
+      ),
+      playlistId: Type.Optional(
+        Type.String({
+          description:
+            "ID of existing playlist (required for add-tracks, from library playlists listing)",
+        })
+      ),
       trackIds: Type.Array(
         Type.String({ description: "Apple Music catalog or library track ID" }),
         {
-          description:
-            "Array of track IDs to add to the playlist (from apple_music_search results)",
+          description: "Array of track IDs (from apple_music_search results)",
         }
       ),
     }),
@@ -269,30 +281,76 @@ export default function piAppleMusic(pi: ExtensionAPI) {
               text: "Apple Music is not configured. Run /apple-music config for setup instructions.",
             },
           ],
-          details: { configured: false, playlistName: params.name, trackCount: 0 },
+          details: {
+            configured: false,
+            action: params.action,
+            playlistId: params.playlistId ?? "",
+            playlistName: params.name ?? "",
+          },
         };
       }
-
       if (!currentConfig.musicUserToken) {
         return {
           content: [
             {
               type: "text" as const,
-              text: 'Apple Music is configured but no Music User Token is set. A Music User Token is required to create playlists. Add "musicUserToken" to your config file.',
+              text: 'Apple Music is configured but no Music User Token is set. A Music User Token is required for playlist operations. Add "musicUserToken" to your config file.',
             },
           ],
-          details: { configured: true, playlistName: params.name, trackCount: 0 },
+          details: {
+            configured: true,
+            action: params.action,
+            playlistId: params.playlistId ?? "",
+            playlistName: params.name ?? "",
+          },
         };
       }
 
       const client = createClient(currentConfig);
-      const result = await createPlaylist(client, params.name, params.description, params.trackIds);
 
+      if (params.action === "add-tracks") {
+        if (!params.playlistId) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: 'playlistId is required for add-tracks action. Use apple_music_library with action "playlists" to find playlist IDs.',
+              },
+            ],
+            details: { configured: true, action: params.action, playlistId: "", playlistName: "" },
+          };
+        }
+        const result = await addTracksToPlaylist(client, params.playlistId, params.trackIds);
+        return {
+          content: [{ type: "text" as const, text: result }],
+          details: {
+            action: params.action,
+            playlistId: params.playlistId,
+            playlistName: "",
+            configured: true,
+          },
+        };
+      }
+
+      // Default: create
+      if (!params.name) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "name is required for create action.",
+            },
+          ],
+          details: { configured: true, action: params.action, playlistId: "", playlistName: "" },
+        };
+      }
+      const result = await createPlaylist(client, params.name, params.description, params.trackIds);
       return {
         content: [{ type: "text" as const, text: result }],
         details: {
+          action: params.action,
           playlistName: params.name,
-          trackCount: params.trackIds.length,
+          playlistId: "",
           configured: true,
         },
       };
