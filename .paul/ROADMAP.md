@@ -12,7 +12,7 @@ Phases: 2 of 4 complete
 |-------|------|-------|--------|-----------|
 | 8 | Spotify Auth & Client | 01 | ✅ Complete | 2026-03-26 |
 | 9 | Spotify Library | 01 | ✅ Complete | 2026-03-26 |
-| 10 | Spotify Search & Playlists | TBD | Not started | - |
+| 10 | Spotify Search & Playlists | 01 | Planning | - |
 | 11 | Spotify TUI & Multi-Platform Polish | TBD | Not started | - |
 
 ### Phase 8: Spotify Auth & Client
