@@ -5,15 +5,15 @@
 See: .paul/PROJECT.md (updated 2026-03-26)
 
 **Core value:** AI-powered playlist generation from your Apple Music library, directly within Pi.
-**Current focus:** v0.3 Spotify Integration — Phase 8
+**Current focus:** v0.3 Spotify Integration — Phase 9
 
 ## Current Position
 
 Milestone: v0.3 Spotify Integration
-Phase: 8 of 11 (Spotify Auth & Client) — Applied
-Plan: 08-01 executed, ready for UNIFY
-Status: APPLY complete, ready for UNIFY
-Last activity: 2026-03-26 — Executed 08-01-PLAN.md (2/2 tasks PASS)
+Phase: 9 of 11 (Spotify Library)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-03-26 — Phase 8 complete, transitioned to Phase 9
 
 Progress:
 - v0.1 Initial Release: [██████████] 100% ✓
@@ -25,13 +25,13 @@ Progress:
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ○     [Executed, ready for UNIFY]
+  ○        ○        ○     [Ready for next PLAN]
 ```
 
 ## Accumulated Context
 
 ### Decisions
-None — clean execution.
+None — clean execution across Phase 8.
 
 ### Deferred Issues
 - Automated music user token auth flow (Apple Music)
@@ -41,17 +41,17 @@ None — clean execution.
 ### Blockers/Concerns
 None.
 
+### Git State
+Branch: main
+Last commit: 0018c67
+PR: https://github.com/coctostan/pi-apple-music/pull/5 (state: MERGED)
+
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Plan 08-01 applied, PR #5 created
-Next action: /paul:unify
-Resume file: .paul/phases/08-spotify-auth-client/08-01-PLAN.md
-Resume context:
-- PR #5 open: https://github.com/coctostan/pi-apple-music/pull/5
-- Branch: feature/08-spotify-auth-client
-- 91 tests passing (73 + 18 new), 0 failures
-- 5 new files in src/spotify/, 2 new test files
+Stopped at: Phase 8 complete, ready to plan Phase 9
+Next action: /paul:plan for Phase 9
+Resume file: .paul/ROADMAP.md
 
 ---
 *STATE.md — Updated after every significant action*
