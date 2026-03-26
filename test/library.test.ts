@@ -9,6 +9,8 @@ import {
   fetchLibraryPlaylists,
   fetchRecentlyPlayed,
   fetchLibrarySummary,
+  fetchGenreBreakdown,
+  fetchTopArtists,
 } from "../src/library.js";
 import { type AppleMusicClient } from "../src/apple-music-client.js";
 
@@ -163,6 +165,8 @@ void describe("fetchLibrarySongs", () => {
     assert.ok(result.includes("5:54")); // 354000ms = 5:54
     assert.ok(result.includes('"Stairway to Heaven" by Led Zeppelin'));
     assert.ok(result.includes("[Rock, Classic Rock]"));
+    assert.ok(result.includes("(ID: s1)"), "Should include track ID");
+    assert.ok(result.includes("(ID: s2)"), "Should include track ID");
   });
 
   void it("handles empty response", async () => {
@@ -300,5 +304,45 @@ void describe("fetchLibrarySummary", () => {
     const result = await fetchLibrarySummary(client);
     assert.ok(result.includes("Error fetching library summary"));
     assert.ok(result.includes("Network error"));
+  });
+});
+
+void describe("fetchGenreBreakdown", () => {
+  beforeEach(() => libraryCache.clear());
+
+  void it("returns genre table sorted by frequency", async () => {
+    const client = createMockClient({ "/v1/me/library/songs": mockSongsResponse });
+    const result = await fetchGenreBreakdown(client, 100);
+
+    assert.ok(result.includes("## Genre Breakdown (2 songs analyzed)"));
+    assert.ok(result.includes("| Genre | Songs | % |"));
+    assert.ok(result.includes("| Rock | 2 | 100% |"));
+    assert.ok(result.includes("| Classic Rock | 1 | 50% |"));
+  });
+
+  void it("handles empty library", async () => {
+    const client = createMockClient({ "/v1/me/library/songs": { data: [] } });
+    const result = await fetchGenreBreakdown(client, 100);
+    assert.ok(result.includes("No songs found in library"));
+  });
+});
+
+void describe("fetchTopArtists", () => {
+  beforeEach(() => libraryCache.clear());
+
+  void it("returns artists sorted by song count", async () => {
+    const client = createMockClient({ "/v1/me/library/songs": mockSongsResponse });
+    const result = await fetchTopArtists(client, 10);
+
+    assert.ok(result.includes("## Top Artists"));
+    // Both artists have 1 song each, order may vary
+    assert.ok(result.includes("Queen (1 song)"));
+    assert.ok(result.includes("Led Zeppelin (1 song)"));
+  });
+
+  void it("handles empty library", async () => {
+    const client = createMockClient({ "/v1/me/library/songs": { data: [] } });
+    const result = await fetchTopArtists(client, 10);
+    assert.ok(result.includes("No songs found in library"));
   });
 });

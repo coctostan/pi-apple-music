@@ -21,6 +21,8 @@ import {
   fetchLibraryPlaylists,
   fetchRecentlyPlayed,
   fetchLibrarySummary,
+  fetchGenreBreakdown,
+  fetchTopArtists,
 } from "./library.js";
 import { searchCatalog, createPlaylist, addTracksToPlaylist } from "./playlist.js";
 
@@ -124,7 +126,16 @@ export default function piAppleMusic(pi: ExtensionAPI) {
       "Read the user's Apple Music library data including songs, artists, albums, and playlists. Returns structured library data for analysis.",
     parameters: Type.Object({
       action: StringEnum(
-        ["songs", "artists", "albums", "playlists", "recent", "summary"] as const,
+        [
+          "songs",
+          "artists",
+          "albums",
+          "playlists",
+          "recent",
+          "summary",
+          "genres",
+          "top-artists",
+        ] as const,
         { description: "Type of library data to retrieve" }
       ),
       limit: Type.Optional(
@@ -181,6 +192,12 @@ export default function piAppleMusic(pi: ExtensionAPI) {
           break;
         case "summary":
           result = await fetchLibrarySummary(client);
+          break;
+        case "genres":
+          result = await fetchGenreBreakdown(client, params.limit ?? 100);
+          break;
+        case "top-artists":
+          result = await fetchTopArtists(client, params.limit ?? 20);
           break;
       }
 
@@ -344,7 +361,25 @@ export default function piAppleMusic(pi: ExtensionAPI) {
           details: { configured: true, action: params.action, playlistId: "", playlistName: "" },
         };
       }
-      const result = await createPlaylist(client, params.name, params.description, params.trackIds);
+      // Best-effort dedup: fetch library song IDs for comparison
+      let libraryIds: Set<string> | undefined;
+      try {
+        const libRes = (await client.get("/v1/me/library/songs?limit=200")) as {
+          data?: { id: string }[];
+        };
+        if (libRes.data && libRes.data.length > 0) {
+          libraryIds = new Set(libRes.data.map((s) => s.id));
+        }
+      } catch {
+        // Dedup is best-effort — continue without it
+      }
+      const result = await createPlaylist(
+        client,
+        params.name,
+        params.description,
+        params.trackIds,
+        libraryIds
+      );
       return {
         content: [{ type: "text" as const, text: result }],
         details: {

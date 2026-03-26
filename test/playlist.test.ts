@@ -152,6 +152,42 @@ void describe("createPlaylist", () => {
     assert.ok(result.includes('playlist "My New Playlist" has been created'));
   });
 
+  void it("notes duplicate tracks when libraryTrackIds provided", async () => {
+    const client = createMockClient({
+      "/v1/me/library/playlists": mockCreatePlaylistResponse,
+    });
+    const libraryIds = new Set(["1482041830", "9999999"]);
+    const result = await createPlaylist(
+      client,
+      "Dupes Test",
+      undefined,
+      ["1482041830", "1613600190"],
+      libraryIds
+    );
+
+    assert.ok(result.includes("1 track(s) may already be in your library"));
+  });
+
+  void it("does not note duplicates when none found", async () => {
+    const client = createMockClient({
+      "/v1/me/library/playlists": mockCreatePlaylistResponse,
+    });
+    const libraryIds = new Set(["9999999"]);
+    const result = await createPlaylist(client, "No Dupes", undefined, ["1482041830"], libraryIds);
+
+    assert.ok(!result.includes("may already be in your library"));
+  });
+
+  void it("works without libraryTrackIds (backwards compatible)", async () => {
+    const client = createMockClient({
+      "/v1/me/library/playlists": mockCreatePlaylistResponse,
+    });
+    const result = await createPlaylist(client, "No Dedup", undefined, ["1482041830"]);
+
+    assert.ok(result.includes("Playlist Created"));
+    assert.ok(!result.includes("may already be in your library"));
+  });
+
   void it("handles undefined description", async () => {
     const client = createMockClient({
       "/v1/me/library/playlists": mockCreatePlaylistResponse,
