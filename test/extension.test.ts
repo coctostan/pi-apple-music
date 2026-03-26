@@ -41,11 +41,11 @@ void describe("piAppleMusic extension", () => {
     piAppleMusic(mockPi as never);
 
     // Should register the /apple-music command
-    assert.equal(commands.length, 1, "Should register exactly 1 command");
+    assert.ok(commands.length >= 1, "Should register at least 1 command");
     assert.equal(commands[0]?.name, "apple-music", "Command name should be apple-music");
 
     // Should register 3 tools
-    assert.equal(tools.length, 3, "Should register exactly 3 tools");
+    assert.ok(tools.length >= 3, "Should register at least 3 tools");
     const toolNames = tools.map((t) => t.name);
     assert.ok(toolNames.includes("apple_music_library"), "Should register library tool");
     assert.ok(toolNames.includes("apple_music_create_playlist"), "Should register playlist tool");

@@ -33,10 +33,42 @@ import {
   renderPlaylistCall,
   renderPlaylistResult,
 } from "./render.js";
+// Spotify imports
+import { loadSpotifyConfig, isSpotifyConfigured, saveSpotifyConfig } from "./spotify/config.js";
+import { type SpotifyConfig } from "./spotify/types.js";
+import { createSpotifyClient } from "./spotify/spotify-client.js";
+import { spotifyCache } from "./spotify/cache.js";
+import {
+  fetchSpotifySavedTracks,
+  fetchSpotifySavedAlbums,
+  fetchSpotifyFollowedArtists,
+  fetchSpotifyPlaylists,
+  fetchSpotifyRecentlyPlayed,
+  fetchSpotifyTopArtists,
+  fetchSpotifyTopTracks,
+  fetchSpotifyGenreBreakdown,
+  fetchSpotifyLibrarySummary,
+} from "./spotify/library.js";
+import { searchSpotifyCatalog, createSpotifyPlaylist, addTracksToSpotifyPlaylist } from "./spotify/playlist.js";
+import {
+  renderSpotifyLibraryCall,
+  renderSpotifyLibraryResult,
+  renderSpotifySearchCall,
+  renderSpotifySearchResult,
+  renderSpotifyPlaylistCall,
+  renderSpotifyPlaylistResult,
+} from "./spotify/render.js";
+import {
+  SPOTIFY_TOOL_NAME_LIBRARY,
+  SPOTIFY_TOOL_NAME_SEARCH,
+  SPOTIFY_TOOL_NAME_PLAYLIST,
+  SPOTIFY_EXTENSION_COMMAND,
+  SPOTIFY_CONFIG_DIR,
+} from "./spotify/constants.js";
 
 export default function piAppleMusic(pi: ExtensionAPI) {
   let config: AppleMusicConfig | null = null;
-
+  let spotifyConfig: SpotifyConfig | null = null;
   function syncConfig(ctx: Pick<ExtensionContext, "hasUI" | "ui">): void {
     config = loadConfig();
     if (ctx.hasUI) {
@@ -47,8 +79,18 @@ export default function piAppleMusic(pi: ExtensionAPI) {
     }
   }
 
-  pi.on("session_start", (_event, ctx) => syncConfig(ctx));
-  pi.on("session_switch", (_event, ctx) => syncConfig(ctx));
+  function syncSpotifyConfig(ctx: Pick<ExtensionContext, "hasUI" | "ui">): void {
+    spotifyConfig = loadSpotifyConfig();
+    if (ctx.hasUI) {
+      const status = isSpotifyConfigured(spotifyConfig)
+        ? `Spotify: ✓ configured`
+        : `Spotify: ✗ not configured`;
+      ctx.ui.setStatus(SPOTIFY_EXTENSION_COMMAND, status);
+    }
+  }
+
+  pi.on("session_start", (_event, ctx) => { syncConfig(ctx); syncSpotifyConfig(ctx); });
+  pi.on("session_switch", (_event, ctx) => { syncConfig(ctx); syncSpotifyConfig(ctx); });
 
   pi.registerCommand(EXTENSION_COMMAND, {
     description: "Apple Music playlist generator — status, config, help",
@@ -404,6 +446,332 @@ export default function piAppleMusic(pi: ExtensionAPI) {
     },
     renderCall: renderPlaylistCall,
     renderResult: renderPlaylistResult,
+  });
+
+  // ============================================================
+  // SPOTIFY TOOLS AND COMMAND
+  // ============================================================
+
+  pi.registerCommand(SPOTIFY_EXTENSION_COMMAND, {
+    description: "Spotify playlist generator — status, config, help",
+    getArgumentCompletions: (prefix) => {
+      const options = ["status", "config", "cache-clear", "help"];
+      const safePrefix = prefix.toLowerCase();
+      const matches = options.filter((o) => o.startsWith(safePrefix));
+      return matches.length > 0 ? matches.map((value) => ({ value, label: value })) : null;
+    },
+    handler: (args, ctx): Promise<void> => {
+      const subcommand = args.trim().toLowerCase();
+
+      switch (subcommand) {
+        case "status": {
+          spotifyConfig = loadSpotifyConfig();
+          const configured = isSpotifyConfigured(spotifyConfig);
+          const hasToken = configured && !!spotifyConfig?.accessToken;
+          const cacheStats = spotifyCache.stats();
+          const cacheAge =
+            cacheStats.oldestAgeSec !== null ? `${cacheStats.oldestAgeSec}s ago` : "empty";
+          const lines = [
+            `Spotify Extension Status`,
+            `  Configured: ${configured ? "✓ yes" : "✗ no"}`,
+            `  Access Token: ${hasToken ? "✓ present" : "✗ not set"}`,
+            `  Cache: ${cacheStats.entries} entries (oldest: ${cacheAge})`,
+            `  Config location: ${SPOTIFY_CONFIG_DIR}/spotify-config.json`,
+          ];
+          notify(ctx, lines.join("\n"));
+          return Promise.resolve();
+        }
+
+        case "cache-clear": {
+          spotifyCache.clear();
+          notify(ctx, "Spotify cache cleared. Next request will fetch fresh data.");
+          return Promise.resolve();
+        }
+
+        case "config": {
+          const instructions = [
+            `To configure Spotify, create ${SPOTIFY_CONFIG_DIR}/spotify-config.json with:`,
+            ``,
+            `{`,
+            `  "clientId": "YOUR_SPOTIFY_CLIENT_ID",`,
+            `  "accessToken": "YOUR_ACCESS_TOKEN",`,
+            `  "refreshToken": "YOUR_REFRESH_TOKEN",`,
+            `  "expiresAt": 1234567890`,
+            `}`,
+            ``,
+            `To get these values:`,
+            `  1. Create a Spotify app at https://developer.spotify.com/dashboard`,
+            `  2. Set redirect URI to http://localhost:8888/callback`,
+            `  3. Use the Authorization Code + PKCE flow to get tokens`,
+            `  4. Copy clientId, accessToken, refreshToken, and expiresAt`,
+          ];
+          notify(ctx, instructions.join("\n"));
+          return Promise.resolve();
+        }
+
+        default:
+          notify(
+            ctx,
+            [
+              `/${SPOTIFY_EXTENSION_COMMAND} status       — show configuration and cache state`,
+              `/${SPOTIFY_EXTENSION_COMMAND} config       — show configuration instructions`,
+              `/${SPOTIFY_EXTENSION_COMMAND} cache-clear  — clear library cache`,
+              `/${SPOTIFY_EXTENSION_COMMAND} help         — show this help`,
+            ].join("\n")
+          );
+          return Promise.resolve();
+      }
+    },
+  });
+
+  // --- Spotify Library Tool ---
+  pi.registerTool({
+    name: SPOTIFY_TOOL_NAME_LIBRARY,
+    label: "Spotify Library",
+    description:
+      "Read the user's Spotify library data including saved tracks, albums, followed artists, playlists, recently played, and top items. Returns structured library data for analysis.",
+    parameters: Type.Object({
+      action: StringEnum(
+        [
+          "songs",
+          "albums",
+          "artists",
+          "playlists",
+          "recent",
+          "summary",
+          "genres",
+          "top-artists",
+          "top-tracks",
+        ] as const,
+        { description: "Type of library data to retrieve" }
+      ),
+      limit: Type.Optional(
+        Type.Number({
+          description: "Maximum number of items to return (default: 50)",
+          default: 50,
+        })
+      ),
+    }),
+    async execute(_toolCallId, params) {
+      const currentConfig = loadSpotifyConfig();
+      if (!isSpotifyConfigured(currentConfig)) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "Spotify is not configured. Run /spotify config for setup instructions.",
+            },
+          ],
+          details: { configured: false, action: params.action },
+        };
+      }
+
+      const client = createSpotifyClient(currentConfig, saveSpotifyConfig);
+      let result: string;
+
+      switch (params.action) {
+        case "songs":
+          result = await fetchSpotifySavedTracks(client, params.limit ?? 50);
+          break;
+        case "albums":
+          result = await fetchSpotifySavedAlbums(client, params.limit ?? 50);
+          break;
+        case "artists":
+          result = await fetchSpotifyFollowedArtists(client, params.limit ?? 50);
+          break;
+        case "playlists":
+          result = await fetchSpotifyPlaylists(client, params.limit ?? 50);
+          break;
+        case "recent":
+          result = await fetchSpotifyRecentlyPlayed(client);
+          break;
+        case "summary":
+          result = await fetchSpotifyLibrarySummary(client);
+          break;
+        case "genres":
+          result = await fetchSpotifyGenreBreakdown(client, params.limit ?? 100);
+          break;
+        case "top-artists":
+          result = await fetchSpotifyTopArtists(client, params.limit ?? 20);
+          break;
+        case "top-tracks":
+          result = await fetchSpotifyTopTracks(client, params.limit ?? 20);
+          break;
+      }
+
+      return {
+        content: [{ type: "text" as const, text: result }],
+        details: { action: params.action, configured: true },
+      };
+    },
+    renderCall: renderSpotifyLibraryCall,
+    renderResult: renderSpotifyLibraryResult,
+  });
+
+  // --- Spotify Search Tool ---
+  pi.registerTool({
+    name: SPOTIFY_TOOL_NAME_SEARCH,
+    label: "Search Spotify",
+    description:
+      "Search the Spotify catalog for tracks by name, artist, or keywords. Returns matching tracks with their Spotify URIs that can be used with spotify_playlist.",
+    parameters: Type.Object({
+      term: Type.String({ description: "Search query (track name, artist, keywords)" }),
+      limit: Type.Optional(
+        Type.Number({
+          description: "Maximum results to return (default: 10, max: 10)",
+          default: 10,
+        })
+      ),
+    }),
+    async execute(_toolCallId, params) {
+      const currentConfig = loadSpotifyConfig();
+      if (!isSpotifyConfigured(currentConfig)) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "Spotify is not configured. Run /spotify config for setup instructions.",
+            },
+          ],
+          details: { configured: false, term: params.term },
+        };
+      }
+
+      const client = createSpotifyClient(currentConfig, saveSpotifyConfig);
+      const result = await searchSpotifyCatalog(
+        client,
+        params.term,
+        params.limit ?? 10
+      );
+
+      return {
+        content: [{ type: "text" as const, text: result }],
+        details: { term: params.term, configured: true },
+      };
+    },
+    renderCall: renderSpotifySearchCall,
+    renderResult: renderSpotifySearchResult,
+  });
+
+  // --- Spotify Playlist Tool ---
+  pi.registerTool({
+    name: SPOTIFY_TOOL_NAME_PLAYLIST,
+    label: "Spotify Playlist",
+    description:
+      'Manage Spotify playlists. Use action "create" to make a new playlist, or "add-tracks" to add songs to an existing playlist. Use spotify_search to find track URIs and spotify_library action "playlists" to find playlist IDs.',
+    parameters: Type.Object({
+      action: StringEnum(["create", "add-tracks"] as const, {
+        description: 'Action to perform (default: "create")',
+      }),
+      name: Type.Optional(
+        Type.String({ description: "Name of the new playlist (required for create)" })
+      ),
+      description: Type.Optional(
+        Type.String({ description: "Description for the playlist (create only)" })
+      ),
+      playlistId: Type.Optional(
+        Type.String({
+          description:
+            "ID of existing playlist (required for add-tracks)",
+        })
+      ),
+      trackUris: Type.Array(
+        Type.String({ description: "Spotify track URI (e.g. spotify:track:abc123)" }),
+        {
+          description: "Array of Spotify track URIs (from spotify_search results)",
+        }
+      ),
+    }),
+    async execute(_toolCallId, params) {
+      const currentConfig = loadSpotifyConfig();
+      if (!isSpotifyConfigured(currentConfig)) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "Spotify is not configured. Run /spotify config for setup instructions.",
+            },
+          ],
+          details: {
+            configured: false,
+            action: params.action,
+            playlistId: params.playlistId ?? "",
+            playlistName: params.name ?? "",
+          },
+        };
+      }
+
+      const client = createSpotifyClient(currentConfig, saveSpotifyConfig);
+
+      if (params.action === "add-tracks") {
+        if (!params.playlistId) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: 'playlistId is required for add-tracks action. Use spotify_library with action "playlists" to find playlist IDs.',
+              },
+            ],
+            details: { configured: true, action: params.action, playlistId: "", playlistName: "" },
+          };
+        }
+        const result = await addTracksToSpotifyPlaylist(client, params.playlistId, params.trackUris);
+        return {
+          content: [{ type: "text" as const, text: result }],
+          details: {
+            action: params.action,
+            playlistId: params.playlistId,
+            playlistName: "",
+            configured: true,
+          },
+        };
+      }
+
+      // Default: create
+      if (!params.name) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "name is required for create action.",
+            },
+          ],
+          details: { configured: true, action: params.action, playlistId: "", playlistName: "" },
+        };
+      }
+
+      // Best-effort dedup: fetch saved track URIs for comparison
+      let existingUris: Set<string> | undefined;
+      try {
+        const savedRes = (await client.get("/v1/me/tracks?limit=50")) as {
+          items?: { track: { uri: string } }[];
+        };
+        if (savedRes.items && savedRes.items.length > 0) {
+          existingUris = new Set(savedRes.items.map((s) => s.track.uri));
+        }
+      } catch {
+        // Dedup is best-effort — continue without it
+      }
+
+      const result = await createSpotifyPlaylist(
+        client,
+        params.name,
+        params.description,
+        params.trackUris,
+        existingUris
+      );
+      return {
+        content: [{ type: "text" as const, text: result }],
+        details: {
+          action: params.action,
+          playlistName: params.name,
+          playlistId: "",
+          configured: true,
+        },
+      };
+    },
+    renderCall: renderSpotifyPlaylistCall,
+    renderResult: renderSpotifyPlaylistResult,
   });
 }
 
