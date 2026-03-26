@@ -6,11 +6,11 @@ A Pi extension that uses an LLM agent to generate personalized Apple Music playl
 ## Current Milestone
 **v0.3 Spotify Integration** (v0.3.0)
 Status: 🚧 In Progress
-Phases: 0 of 4 complete
+Phases: 1 of 4 complete
 
 | Phase | Name | Plans | Status | Completed |
 |-------|------|-------|--------|-----------|
-| 8 | Spotify Auth & Client | 01 | Planning | - |
+| 8 | Spotify Auth & Client | 01 | ✅ Complete | 2026-03-26 |
 | 9 | Spotify Library | TBD | Not started | - |
 | 10 | Spotify Search & Playlists | TBD | Not started | - |
 | 11 | Spotify TUI & Multi-Platform Polish | TBD | Not started | - |
