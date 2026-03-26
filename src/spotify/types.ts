@@ -84,3 +84,14 @@ export interface SpotifyTopItems<T> {
   limit: number;
   offset: number;
 }
+
+export interface SpotifySearchResponse {
+  tracks: SpotifyPaginated<SpotifyTrack>;
+}
+
+export interface SpotifyCreatePlaylistResponse {
+  id: string;
+  name: string;
+  external_urls: { spotify: string };
+  tracks: { total: number };
+}
