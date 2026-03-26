@@ -7,6 +7,7 @@ import {
   type LibraryPlaylistAttributes,
   type RecentlyPlayedAttributes,
 } from "./types.js";
+import { libraryCache } from "./cache.js";
 
 function formatDuration(ms: number): string {
   const minutes = Math.floor(ms / 60000);
@@ -15,6 +16,10 @@ function formatDuration(ms: number): string {
 }
 
 export async function fetchLibrarySongs(client: AppleMusicClient, limit: number): Promise<string> {
+  const cacheKey = `songs:${limit}`;
+  const cached = libraryCache.get(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = (await client.get(
       `/v1/me/library/songs?limit=${limit}`
@@ -32,7 +37,9 @@ export async function fetchLibrarySongs(client: AppleMusicClient, limit: number)
       return `${i + 1}. "${attrs.name}" by ${attrs.artistName} (${attrs.albumName}) ${duration}${genres}`;
     });
 
-    return `## Library Songs (${response.data.length} of ${total})\n\n${lines.join("\n")}`;
+    const result = `## Library Songs (${response.data.length} of ${total})\n\n${lines.join("\n")}`;
+    libraryCache.set(cacheKey, result);
+    return result;
   } catch (error) {
     return `## Library Songs\nError fetching songs: ${error instanceof Error ? error.message : String(error)}`;
   }
@@ -42,6 +49,10 @@ export async function fetchLibraryArtists(
   client: AppleMusicClient,
   limit: number
 ): Promise<string> {
+  const cacheKey = `artists:${limit}`;
+  const cached = libraryCache.get(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = (await client.get(
       `/v1/me/library/artists?limit=${limit}`
@@ -54,13 +65,19 @@ export async function fetchLibraryArtists(
     const total = response.meta?.total ?? response.data.length;
     const lines = response.data.map((artist, i) => `${i + 1}. ${artist.attributes.name}`);
 
-    return `## Library Artists (${response.data.length} of ${total})\n\n${lines.join("\n")}`;
+    const result = `## Library Artists (${response.data.length} of ${total})\n\n${lines.join("\n")}`;
+    libraryCache.set(cacheKey, result);
+    return result;
   } catch (error) {
     return `## Library Artists\nError fetching artists: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
 export async function fetchLibraryAlbums(client: AppleMusicClient, limit: number): Promise<string> {
+  const cacheKey = `albums:${limit}`;
+  const cached = libraryCache.get(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = (await client.get(
       `/v1/me/library/albums?limit=${limit}`
@@ -78,7 +95,9 @@ export async function fetchLibraryAlbums(client: AppleMusicClient, limit: number
       return `${i + 1}. "${attrs.name}" by ${attrs.artistName} (${tracks})${genres}`;
     });
 
-    return `## Library Albums (${response.data.length} of ${total})\n\n${lines.join("\n")}`;
+    const result = `## Library Albums (${response.data.length} of ${total})\n\n${lines.join("\n")}`;
+    libraryCache.set(cacheKey, result);
+    return result;
   } catch (error) {
     return `## Library Albums\nError fetching albums: ${error instanceof Error ? error.message : String(error)}`;
   }
@@ -88,6 +107,10 @@ export async function fetchLibraryPlaylists(
   client: AppleMusicClient,
   limit: number
 ): Promise<string> {
+  const cacheKey = `playlists:${limit}`;
+  const cached = libraryCache.get(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = (await client.get(
       `/v1/me/library/playlists?limit=${limit}`
@@ -104,13 +127,19 @@ export async function fetchLibraryPlaylists(
       return `${i + 1}. "${attrs.name}"${desc}`;
     });
 
-    return `## Library Playlists (${response.data.length} of ${total})\n\n${lines.join("\n")}`;
+    const result = `## Library Playlists (${response.data.length} of ${total})\n\n${lines.join("\n")}`;
+    libraryCache.set(cacheKey, result);
+    return result;
   } catch (error) {
     return `## Library Playlists\nError fetching playlists: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
 export async function fetchRecentlyPlayed(client: AppleMusicClient): Promise<string> {
+  const cacheKey = "recent:10";
+  const cached = libraryCache.get(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = (await client.get(
       `/v1/me/recent/played?limit=10`
@@ -127,13 +156,19 @@ export async function fetchRecentlyPlayed(client: AppleMusicClient): Promise<str
       return `${i + 1}. "${attrs.name}"${artist} (${type})`;
     });
 
-    return `## Recently Played\n\n${lines.join("\n")}`;
+    const result = `## Recently Played\n\n${lines.join("\n")}`;
+    libraryCache.set(cacheKey, result);
+    return result;
   } catch (error) {
     return `## Recently Played\nError fetching recently played: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
 export async function fetchLibrarySummary(client: AppleMusicClient): Promise<string> {
+  const cacheKey = "summary:default";
+  const cached = libraryCache.get(cacheKey);
+  if (cached) return cached;
+
   try {
     const [songsRes, artistsRes, albumsRes, playlistsRes] = await Promise.all([
       client.get("/v1/me/library/songs?limit=10") as Promise<
@@ -202,7 +237,9 @@ export async function fetchLibrarySummary(client: AppleMusicClient): Promise<str
       );
     }
 
-    return sections.join("\n");
+    const result = sections.join("\n");
+    libraryCache.set(cacheKey, result);
+    return result;
   } catch (error) {
     return `## Library Summary\nError fetching library summary: ${error instanceof Error ? error.message : String(error)}`;
   }

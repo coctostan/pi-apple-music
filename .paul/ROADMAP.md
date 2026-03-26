@@ -12,7 +12,7 @@ Phases: 0 of 4 complete
 
 | Phase | Name | Plans | Status | Completed |
 |-------|------|-------|--------|-----------|
-| 4 | Library Caching | TBD | Not started | - |
+| 4 | Library Caching | 01 | Planning | - |
 | 5 | Playlist Management | TBD | Not started | - |
 | 6 | Smart Playlist Generation | TBD | Not started | - |
 | 7 | TUI Polish | TBD | Not started | - |

@@ -13,6 +13,7 @@ import {
 import { loadConfig, isConfigured } from "./config.js";
 import { type AppleMusicConfig } from "./types.js";
 import { createClient } from "./apple-music-client.js";
+import { libraryCache } from "./cache.js";
 import {
   fetchLibrarySongs,
   fetchLibraryArtists,
@@ -42,7 +43,7 @@ export default function piAppleMusic(pi: ExtensionAPI) {
   pi.registerCommand(EXTENSION_COMMAND, {
     description: "Apple Music playlist generator — status, config, help",
     getArgumentCompletions: (prefix) => {
-      const options = ["status", "config", "help"];
+      const options = ["status", "config", "cache-clear", "help"];
       const safePrefix = prefix.toLowerCase();
       const matches = options.filter((o) => o.startsWith(safePrefix));
       return matches.length > 0 ? matches.map((value) => ({ value, label: value })) : null;
@@ -55,13 +56,23 @@ export default function piAppleMusic(pi: ExtensionAPI) {
           config = loadConfig();
           const configured = isConfigured(config);
           const hasUserToken = configured && !!config?.musicUserToken;
+          const cacheStats = libraryCache.stats();
+          const cacheAge =
+            cacheStats.oldestAgeSec !== null ? `${cacheStats.oldestAgeSec}s ago` : "empty";
           const lines = [
             `Apple Music Extension Status`,
             `  Configured: ${configured ? "✓ yes" : "✗ no"}`,
             `  Music User Token: ${hasUserToken ? "✓ present" : "✗ not set"}`,
+            `  Cache: ${cacheStats.entries} entries (oldest: ${cacheAge})`,
             `  Config location: ${CONFIG_DIR}/config.json`,
           ];
           notify(ctx, lines.join("\n"));
+          return Promise.resolve();
+        }
+
+        case "cache-clear": {
+          libraryCache.clear();
+          notify(ctx, "Library cache cleared. Next request will fetch fresh data.");
           return Promise.resolve();
         }
 
@@ -94,9 +105,10 @@ export default function piAppleMusic(pi: ExtensionAPI) {
           notify(
             ctx,
             [
-              `/${EXTENSION_COMMAND} status  — show configuration state`,
-              `/${EXTENSION_COMMAND} config  — show configuration instructions`,
-              `/${EXTENSION_COMMAND} help    — show this help`,
+              `/${EXTENSION_COMMAND} status       — show configuration and cache state`,
+              `/${EXTENSION_COMMAND} config       — show configuration instructions`,
+              `/${EXTENSION_COMMAND} cache-clear  — clear library cache`,
+              `/${EXTENSION_COMMAND} help         — show this help`,
             ].join("\n")
           );
           return Promise.resolve();

@@ -94,7 +94,9 @@ const PORT = 8374;
 const server = createServer((req, res) => {
   if (req.method === "POST" && req.url === "/token") {
     let body = "";
-    req.on("data", (chunk) => { body += chunk; });
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
     req.on("end", () => {
       receivedToken = body;
       console.log("\n══════════════════════════════════════");
@@ -103,7 +105,7 @@ const server = createServer((req, res) => {
       console.log(body);
       console.log("\n══════════════════════════════════════");
       console.log("Add this to ~/.pi-apple-music/config.json");
-      console.log("as the \"musicUserToken\" value.");
+      console.log('as the "musicUserToken" value.');
       console.log("══════════════════════════════════════\n");
       console.log("Press Ctrl+C to stop the server.\n");
       res.writeHead(200);
