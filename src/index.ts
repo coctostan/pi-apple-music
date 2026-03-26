@@ -25,6 +25,14 @@ import {
   fetchTopArtists,
 } from "./library.js";
 import { searchCatalog, createPlaylist, addTracksToPlaylist } from "./playlist.js";
+import {
+  renderLibraryCall,
+  renderLibraryResult,
+  renderSearchCall,
+  renderSearchResult,
+  renderPlaylistCall,
+  renderPlaylistResult,
+} from "./render.js";
 
 export default function piAppleMusic(pi: ExtensionAPI) {
   let config: AppleMusicConfig | null = null;
@@ -206,6 +214,8 @@ export default function piAppleMusic(pi: ExtensionAPI) {
         details: { action: params.action, configured: true },
       };
     },
+    renderCall: renderLibraryCall,
+    renderResult: renderLibraryResult,
   });
 
   // --- Search Tool ---
@@ -257,6 +267,8 @@ export default function piAppleMusic(pi: ExtensionAPI) {
         details: { term: params.term, configured: true },
       };
     },
+    renderCall: renderSearchCall,
+    renderResult: renderSearchResult,
   });
 
   // --- Playlist Tool ---
@@ -390,6 +402,8 @@ export default function piAppleMusic(pi: ExtensionAPI) {
         },
       };
     },
+    renderCall: renderPlaylistCall,
+    renderResult: renderPlaylistResult,
   });
 }
 

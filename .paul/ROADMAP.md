@@ -6,7 +6,7 @@ A Pi extension that uses an LLM agent to generate personalized Apple Music playl
 ## Current Milestone
 **v0.2 Smart Playlists & Polish** (v0.2.0)
 Status: 🚧 In Progress
-Phases: 2 of 4 complete
+Phases: 3 of 4 complete
 
 ## Phases
 
@@ -14,8 +14,8 @@ Phases: 2 of 4 complete
 |-------|------|-------|--------|-----------|
 | 4 | Library Caching | 01 | ✓ Complete | 2026-03-26 |
 | 5 | Playlist Management | 01 | ✓ Complete | 2026-03-26 |
-| 6 | Smart Playlist Generation | 01 | Planning | - |
-| 7 | TUI Polish | TBD | Not started | - |
+| 6 | Smart Playlist Generation | 01 | ✓ Complete | 2026-03-26 |
+| 7 | TUI Polish | 01 | Planning | - |
 
 ## Phase Details
 
