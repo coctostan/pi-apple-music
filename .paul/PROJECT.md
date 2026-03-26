@@ -32,15 +32,17 @@ AI-powered playlist generation from your Apple Music library, directly within Pi
 - [x] Add tracks to existing playlists — v0.2
 - [x] Genre/artist analysis for smarter recommendations — v0.2
 - [x] Custom TUI rendering — v0.2
+- [x] Spotify PKCE auth, config, and HTTP client — v0.3
 
 ### Active
-- [ ] Automated music user token auth flow
+- [ ] Spotify library reading (saved tracks, albums, artists, playlists, recently played, top items)
+- [ ] Spotify catalog search
+- [ ] Spotify playlist creation and track management
+- [ ] Spotify TUI rendering and /spotify command
+- [ ] Automated music user token auth flow (Apple Music)
 - [ ] CI/CD pipeline (GitHub Actions)
 - [ ] npm publishing
-
-### Planned
-- To be refined in next milestone
-
+- To be refined in later milestones
 ### Out of Scope
 - None explicitly yet
 
@@ -77,4 +79,4 @@ AI-powered playlist generation from your Apple Music library, directly within Pi
 - `.paul/MILESTONES.md` — completed milestone log
 
 ---
-*Last updated: 2026-03-26 after v0.2 Smart Playlists & Polish*
+*Last updated: 2026-03-26 after Phase 8 (Spotify Auth & Client)*

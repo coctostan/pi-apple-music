@@ -4,13 +4,36 @@
 A Pi extension that uses an LLM agent to generate personalized Apple Music playlists by analyzing the user's library and natural language input.
 
 ## Current Milestone
-**v0.2 Smart Playlists & Polish** (v0.2.0)
-Status: ✅ Complete
-Completed: 2026-03-26
+**v0.3 Spotify Integration** (v0.3.0)
+Status: 🚧 In Progress
+Phases: 1 of 4 complete
 
-## Next Milestone
-Run /paul:discuss-milestone or /paul:milestone to define.
+| Phase | Name | Plans | Status | Completed |
+|-------|------|-------|--------|-----------|
+| 8 | Spotify Auth & Client | 01 | ✅ Complete | 2026-03-26 |
+| 9 | Spotify Library | TBD | Not started | - |
+| 10 | Spotify Search & Playlists | TBD | Not started | - |
+| 11 | Spotify TUI & Multi-Platform Polish | TBD | Not started | - |
 
+### Phase 8: Spotify Auth & Client
+
+Focus: PKCE authorization flow, token management (access + refresh), Spotify API HTTP client
+Plans: TBD (defined during /paul:plan)
+
+### Phase 9: Spotify Library
+
+Focus: Read saved tracks, albums, followed artists, playlists, recently played, top items, genre breakdown
+Plans: TBD (defined during /paul:plan)
+
+### Phase 10: Spotify Search & Playlists
+
+Focus: Catalog search, create playlists, add tracks to existing playlists, duplicate detection
+Plans: TBD (defined during /paul:plan)
+
+### Phase 11: Spotify TUI & Multi-Platform Polish
+
+Focus: Custom TUI rendering for Spotify tools, /spotify command, platform selection UX
+Plans: TBD (defined during /paul:plan)
 ## Completed Milestones
 
 <details>
@@ -37,4 +60,4 @@ Run /paul:discuss-milestone or /paul:milestone to define.
 </details>
 
 ---
-*Roadmap updated: 2026-03-26 after v0.2 Smart Playlists & Polish*
+*Roadmap updated: 2026-03-26 after v0.3 Spotify Integration milestone created*
