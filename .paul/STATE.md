@@ -5,38 +5,36 @@
 See: .paul/PROJECT.md (updated 2026-03-26)
 
 **Core value:** AI-powered playlist generation from your Apple Music library, directly within Pi.
-**Current focus:** Milestone v0.1 complete — ready for next
+**Current focus:** v0.2 Smart Playlists & Polish
 
 ## Current Position
 
-Milestone: Awaiting next milestone
-Phase: None active
-Plan: None
-Status: Milestone v0.1 Initial Release complete — ready for next
-Last activity: 2026-03-26 — Milestone completed
+Milestone: v0.2 Smart Playlists & Polish
+Phase: 4 of 7 (Library Caching)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-03-26 — Milestone created
 
 Progress:
-- v0.1 Initial Release: [██████████] 100% ✓
+- v0.2 Smart Playlists & Polish: [░░░░░░░░░░] 0%
 
 ## Loop Position
 
 Current loop state:
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ○        ○        ○     [Milestone complete — ready for next]
+  ○        ○        ○     [Ready for first PLAN]
 ```
 
 ## Accumulated Context
 
 ### Decisions
-None — clean execution across all 3 phases.
+None yet.
 
 ### Deferred Issues
 - Automated music user token auth flow — user provides manually
-- Library data caching — fetch fresh each call
-- Adding tracks to existing playlists — create-only for now
 - CI/CD pipeline
-- Custom TUI rendering for tool outputs
+- npm publishing
 
 ### Blockers/Concerns
 None.
@@ -44,9 +42,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Milestone v0.1 Initial Release complete
-Next action: /paul:discuss-milestone or /paul:milestone
-Resume file: .paul/MILESTONES.md
+Stopped at: Milestone created, ready to plan
+Next action: /paul:plan for Phase 4
+Resume file: .paul/ROADMAP.md
 
 ---
 *STATE.md — Updated after every significant action*
