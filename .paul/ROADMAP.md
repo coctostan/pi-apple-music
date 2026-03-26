@@ -5,33 +5,25 @@ A Pi extension that uses an LLM agent to generate personalized Apple Music playl
 
 ## Current Milestone
 **v0.2 Smart Playlists & Polish** (v0.2.0)
-Status: 🚧 In Progress
-Phases: 3 of 4 complete
+Status: ✅ Complete
+Completed: 2026-03-26
 
-## Phases
-
-| Phase | Name | Plans | Status | Completed |
-|-------|------|-------|--------|-----------|
-| 4 | Library Caching | 01 | ✓ Complete | 2026-03-26 |
-| 5 | Playlist Management | 01 | ✓ Complete | 2026-03-26 |
-| 6 | Smart Playlist Generation | 01 | ✓ Complete | 2026-03-26 |
-| 7 | TUI Polish | 01 | Planning | - |
-
-## Phase Details
-
-### Phase 4: Library Caching
-Cache layer for library data with TTL-based expiration. Persist between tool calls to avoid re-fetching on every request. Support manual cache invalidation via command.
-
-### Phase 5: Playlist Management
-Add tracks to existing playlists. List and select from existing playlists. Extend the playlist tool beyond create-only.
-
-### Phase 6: Smart Playlist Generation
-Genre and mood analysis from library data. Deduplication of tracks already in library. Better LLM context for more relevant playlist recommendations.
-
-### Phase 7: TUI Polish
-Custom renderCall and renderResult for all tools. Nicer display of search results, library data, and playlist confirmations in the Pi TUI.
+## Next Milestone
+Run /paul:discuss-milestone or /paul:milestone to define.
 
 ## Completed Milestones
+
+<details>
+<summary>v0.2 Smart Playlists & Polish - 2026-03-26 (4 phases)</summary>
+
+| Phase | Name | Plans | Completed |
+|-------|------|-------|-----------|
+| 4 | Library Caching | 01 | 2026-03-26 |
+| 5 | Playlist Management | 01 | 2026-03-26 |
+| 6 | Smart Playlist Generation | 01 | 2026-03-26 |
+| 7 | TUI Polish | 01 | 2026-03-26 |
+
+</details>
 
 <details>
 <summary>v0.1 Initial Release - 2026-03-26 (3 phases)</summary>
@@ -45,4 +37,4 @@ Custom renderCall and renderResult for all tools. Nicer display of search result
 </details>
 
 ---
-*Roadmap updated: 2026-03-26 — v0.2 milestone created*
+*Roadmap updated: 2026-03-26 after v0.2 Smart Playlists & Polish*
