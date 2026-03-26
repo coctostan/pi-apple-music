@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { searchCatalog, createPlaylist } from "../src/playlist.js";
+import { searchCatalog, createPlaylist, addTracksToPlaylist } from "../src/playlist.js";
 import { type AppleMusicClient } from "../src/apple-music-client.js";
 
 function createMockClient(responses: Record<string, unknown>): AppleMusicClient {
@@ -205,5 +205,54 @@ void describe("createPlaylist", () => {
     assert.equal(tracks[0]?.type, "songs", "Numeric ID should be type songs");
     assert.equal(tracks[1]?.type, "library-songs", "i. prefix should be type library-songs");
     assert.equal(tracks[2]?.type, "songs", "Numeric ID should be type songs");
+  });
+});
+
+void describe("addTracksToPlaylist", () => {
+  void it("returns confirmation with playlist ID and track count", async () => {
+    const client = createMockClient({
+      "/v1/me/library/playlists/p.ABC123/tracks": null, // 204 No Content
+    });
+    const result = await addTracksToPlaylist(client, "p.ABC123", ["1482041830", "1613600190"]);
+
+    assert.ok(result.includes("## Tracks Added \u2713"));
+    assert.ok(result.includes("**Playlist ID:** p.ABC123"));
+    assert.ok(result.includes("**Tracks added:** 2"));
+    assert.ok(result.includes("Successfully added 2 tracks"));
+  });
+
+  void it("handles single track grammar", async () => {
+    const client = createMockClient({
+      "/v1/me/library/playlists/p.XYZ/tracks": null,
+    });
+    const result = await addTracksToPlaylist(client, "p.XYZ", ["123"]);
+    assert.ok(result.includes("1 track to"), "Single track should not be pluralized");
+  });
+
+  void it("handles API errors gracefully", async () => {
+    const client = createErrorClient("403 Forbidden");
+    const result = await addTracksToPlaylist(client, "p.ABC123", ["123"]);
+    assert.ok(result.includes("Add Tracks Failed"));
+    assert.ok(result.includes("403 Forbidden"));
+  });
+
+  void it("correctly builds request body with track types", async () => {
+    let capturedBody: unknown = null;
+    const client = {
+      get(): Promise<unknown> {
+        return Promise.reject(new Error("not used"));
+      },
+      post(_path: string, body: unknown): Promise<unknown> {
+        capturedBody = body;
+        return Promise.resolve(null); // 204
+      },
+    } as unknown as AppleMusicClient;
+
+    await addTracksToPlaylist(client, "p.TEST", ["1234", "i.lib5678"]);
+
+    const parsed = capturedBody as { data: { id: string; type: string }[] };
+    assert.equal(parsed.data.length, 2);
+    assert.equal(parsed.data[0]?.type, "songs");
+    assert.equal(parsed.data[1]?.type, "library-songs");
   });
 });
