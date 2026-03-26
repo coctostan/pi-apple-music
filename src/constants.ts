@@ -16,3 +16,6 @@ export const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
 /** Maximum developer token lifetime: 6 months in seconds */
 export const MAX_TOKEN_LIFETIME_SECONDS = 15777000;
+
+/** Default cache TTL: 5 minutes */
+export const CACHE_TTL_MS = 5 * 60 * 1000;

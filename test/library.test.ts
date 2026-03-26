@@ -1,4 +1,6 @@
 import { describe, it } from "node:test";
+import { beforeEach } from "node:test";
+import { libraryCache } from "../src/cache.js";
 import assert from "node:assert/strict";
 import {
   fetchLibrarySongs,
@@ -150,6 +152,7 @@ const mockRecentResponse = {
 };
 
 void describe("fetchLibrarySongs", () => {
+  beforeEach(() => libraryCache.clear());
   void it("formats songs with name, artist, album, duration, and genre", async () => {
     const client = createMockClient({ "/v1/me/library/songs": mockSongsResponse });
     const result = await fetchLibrarySongs(client, 50);
@@ -177,6 +180,7 @@ void describe("fetchLibrarySongs", () => {
 });
 
 void describe("fetchLibraryArtists", () => {
+  beforeEach(() => libraryCache.clear());
   void it("formats artists as a numbered list", async () => {
     const client = createMockClient({ "/v1/me/library/artists": mockArtistsResponse });
     const result = await fetchLibraryArtists(client, 50);
@@ -195,6 +199,7 @@ void describe("fetchLibraryArtists", () => {
 });
 
 void describe("fetchLibraryAlbums", () => {
+  beforeEach(() => libraryCache.clear());
   void it("formats albums with name, artist, track count, and genre", async () => {
     const client = createMockClient({ "/v1/me/library/albums": mockAlbumsResponse });
     const result = await fetchLibraryAlbums(client, 50);
@@ -230,6 +235,7 @@ void describe("fetchLibraryAlbums", () => {
 });
 
 void describe("fetchLibraryPlaylists", () => {
+  beforeEach(() => libraryCache.clear());
   void it("formats playlists with name and description", async () => {
     const client = createMockClient({
       "/v1/me/library/playlists": mockPlaylistsResponse,
@@ -249,6 +255,7 @@ void describe("fetchLibraryPlaylists", () => {
 });
 
 void describe("fetchRecentlyPlayed", () => {
+  beforeEach(() => libraryCache.clear());
   void it("formats recently played items with type", async () => {
     const client = createMockClient({ "/v1/me/recent/played": mockRecentResponse });
     const result = await fetchRecentlyPlayed(client);
@@ -267,6 +274,7 @@ void describe("fetchRecentlyPlayed", () => {
 });
 
 void describe("fetchLibrarySummary", () => {
+  beforeEach(() => libraryCache.clear());
   void it("returns combined overview with counts and samples", async () => {
     const client = createMockClient({
       "/v1/me/library/songs": mockSongsResponse,
